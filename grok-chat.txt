@@ -1,5 +1,3 @@
-# GrokChat
-
 Installation Instructions
 
 Create Directory Structure:
