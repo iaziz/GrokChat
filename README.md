@@ -1,5 +1,5 @@
 # GrokChat
-
+[![temp-Image-SW0-FN1.avif](https://i.postimg.cc/wvYRd0ns/temp-Image-SW0-FN1.avif)](https://postimg.cc/t1D43tqX)
 Installation Instructions
 
 Create Directory Structure:
