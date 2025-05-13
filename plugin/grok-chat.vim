@@ -57,8 +57,12 @@ import vim
 import sys
 import os
 # Use absolute path
-python_dir = '/Users/xtrem/.vim/pack/grok_chat/start/grok_chat/python'
+# python_dir = '/Users/xtrem/.vim/pack/grok_chat/start/grok_chat/python'
+
+python_dir = os.path.join(vim.eval("expand('$HOME')"), '.vim', 'pack', 'grok_chat', 'start', 'grok_chat', 'python')
+
 sys.path.append(python_dir)
+
 try:
     import grok_chat
     prompt = vim.eval('l:prompt')

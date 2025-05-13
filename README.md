@@ -8,13 +8,6 @@ mkdir -p ~/.vim/pack/grok_chat/start/grok_chat/{plugin,python}
 Save the grok_chat.vim file in ~/.vim/pack/grok_chat/start/grok_chat/plugin/ and grok_chat.py in ~/.vim/pack/grok_chat/start/grok_chat/python/.
 Install Python Dependencies: Install the openai Python package:
 
-in plugin directory "grok-chat.vim" file line 60:
-
-replace user to your user
-
-python_dir = '/Users/YOURUSERNAME/.vim/pack/grok_chat/start/grok_chat/python'
-
-
 pip install openai
 
 Set API Key: Set your xAI API key as an environment variable:
