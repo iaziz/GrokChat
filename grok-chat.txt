@@ -1,10 +1,6 @@
-Installation Instructions
+# GrokChat
+[![bsLP1.gif](https://s14.gifyu.com/images/bsLP1.gif)](https://gifyu.com/image/bsLP1)Installation Instructions
 
-Create Directory Structure:
-
-mkdir -p ~/.vim/pack/grok_chat/start/grok_chat/{plugin,python}
-
-Save the grok_chat.vim file in ~/.vim/pack/grok_chat/start/grok_chat/plugin/ and grok_chat.py in ~/.vim/pack/grok_chat/start/grok_chat/python/.
 Install Python Dependencies: Install the openai Python package:
 
 pip install openai
@@ -12,6 +8,12 @@ pip install openai
 Set API Key: Set your xAI API key as an environment variable:
 
 export XAI_API_KEY='your-xai-api-key'
+
+Install the GrokChat using Plug:
+
+add this line to ~/.vimrc
+
+Plug 'iaziz/GrokChat'
 
 You can obtain an API key from https://x.ai/api.[](https://lablab.ai/t/xai-beginner-tutorial)
 Reload Vim: Start Vim and run :packloadall to load the plugin, or restart Vim.

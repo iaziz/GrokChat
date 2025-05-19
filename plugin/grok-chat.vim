@@ -8,6 +8,8 @@ if exists('g:loaded_grok_chat')
 endif
 let g:loaded_grok_chat = 1
 
+let s:plugin_root_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
+
 " Command to start the chat
 command! GrokChat call s:GrokChat()
 
@@ -23,25 +25,47 @@ function! s:GrokChat()
   setlocal linebreak
   file GrokChat
 
-  " Insert initial instructions
-  call append(0, ['# Grok Chat', 'Type your message and press <C-g> to send.', ''])
+  " No initial instructions; start with an empty line
+  call append(0, [''])
   normal! G
 
   " Map <C-g> to send the message
   nnoremap <buffer> <C-g> :call <SID>SendMessage()<CR>
 endfunction
 
+" Function to animate typing text in the buffer
+function! s:TypeText(text, speed)
+  " Check if buffer is modifiable
+  if !&modifiable
+    setlocal modifiable
+  endif
+  " Validate inputs
+  if empty(a:text)
+    echoerr "Text cannot be empty!"
+    return
+  endif
+  if a:speed <= 0
+    echoerr "Speed must be positive!"
+    return
+  endif
+  " Split text into characters
+  let chars = split(a:text, '\zs')
+  for char in chars
+    execute "normal! a" . char
+    redraw
+    execute "sleep " . a:speed . "m"
+  endfor
+endfunction
+
 " Function to send the message
 function! s:SendMessage()
-  " Get the last non-empty line as the prompt
+  " Get all lines in the buffer
   let l:lines = getline(1, '$')
-  let l:prompt = ''
-  for l:line in reverse(l:lines)
-    if l:line !~ '^\s*$'
-      let l:prompt = l:line
-      break
-    endif
-  endfor
+  " Filter out empty lines and trim whitespace
+  let l:non_empty_lines = filter(map(l:lines, 'trim(v:val)'), '!empty(v:val)')
+  
+  " Join non-empty lines into a single prompt
+  let l:prompt = join(l:non_empty_lines, "\n")
 
   if empty(l:prompt)
     echomsg 'No prompt entered.'
@@ -49,38 +73,65 @@ function! s:SendMessage()
   endif
 
   " Append user prompt with prefix
-  call append(line('$'), ['🗨: ' . l:prompt, ''])
+  call append(line('$'), ['🗨: ' . l:non_empty_lines[0], join(l:non_empty_lines[1:], '   '), ''])
+
+  " Store the original modifiable state
+  let l:original_modifiable = &modifiable
 
   " Call Python to send the prompt to Grok API
   python3 << EOF
-import vim
 import sys
-import os
-# Use absolute path
-# python_dir = '/Users/xtrem/.vim/pack/grok_chat/start/grok_chat/python'
-
-python_dir = os.path.join(vim.eval("expand('$HOME')"), '.vim', 'pack', 'grok_chat', 'start', 'grok_chat', 'python')
-
+from os.path import normpath, join
+import vim
+plugin_root_dir = vim.eval('s:plugin_root_dir')
+python_dir = normpath(join(plugin_root_dir, '..', 'python'))
 sys.path.append(python_dir)
 
 try:
     import grok_chat
     prompt = vim.eval('l:prompt')
     response = grok_chat.send_to_grok(prompt)
-    # Split response into lines and escape special characters
+    # Split response into lines
     lines = response.split('\n')
-    escaped_lines = [line.replace("'", "''").replace('"', '\\"').replace('\n', ' ') for line in lines]
-    # Prepare lines for Vim, with prefix on first line
-    vim_lines = [f"🦜: {escaped_lines[0]}"] + [f"   {line}" for line in escaped_lines[1:]]
-    # Append lines to buffer
-    for line in vim_lines:
-        vim.command(f"call append(line('$'), '{line}')")
-    vim.command("call append(line('$'), '')")
+    # Store lines in a Vim variable
+    vim.command("let s:response_lines = " + str(lines))
 except Exception as e:
     # Robust escaping of error message
     error_msg = str(e).replace("'", "''").replace('"', '\\"').replace('\n', ' ').replace(':', ' ')
     vim.command(f"echomsg 'Python error {error_msg}'")
 EOF
+
+  " Check if response_lines exists
+  if !exists('s:response_lines')
+    echomsg 'No response received from Grok API.'
+    return
+  endif
+
+  " Ensure buffer is modifiable for typing
+  setlocal modifiable
+
+  " Append an empty line before the response
+  call append(line('$'), '')
+
+  " Process and animate each response line
+  let l:first = 1
+  for l:line in s:response_lines
+    let l:prefix = l:first ? '🦜: ' : '   '
+    let l:text = l:prefix . l:line
+    call s:TypeText(l:text . "\n", 50) " 50ms per character
+    let l:first = 0
+  endfor
+
+  " Append an empty line after the response
+  call append(line('$'), '')
+
+  " Restore original modifiable state
+  if !l:original_modifiable
+    setlocal nomodifiable
+  endif
+
+  " Clear response_lines
+  unlet s:response_lines
 
   normal! G
 endfunction
