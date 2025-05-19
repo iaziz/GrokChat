@@ -79,7 +79,8 @@ function! s:SendMessage()
   let l:original_modifiable = &modifiable
 
   " Call Python to send the prompt to Grok API
-  python3 << EOF
+
+python3 << EOF
 import sys
 from os.path import normpath, join
 import vim
@@ -93,14 +94,21 @@ try:
     response = grok_chat.send_to_grok(prompt)
     # Split response into lines
     lines = response.split('\n')
-    # Store lines in a Vim variable
-    vim.command("let s:response_lines = " + str(lines))
+    # Append lines directly to the buffer
+    vim.command("setlocal modifiable")
+    for i, line in enumerate(lines):
+        prefix = '🦜: ' if i == 0 else '   '
+        # Escape single quotes and backslashes for Vim
+        escaped_line = line.replace("'", "''").replace('\\', '\\\\')
+        vim.command(f"call append(line('$'), '{prefix}{escaped_line}')")
+    vim.command("call append(line('$'), '')")
+    vim.command("normal! G")
 except Exception as e:
-    # Robust escaping of error message
     error_msg = str(e).replace("'", "''").replace('"', '\\"').replace('\n', ' ').replace(':', ' ')
     vim.command(f"echomsg 'Python error {error_msg}'")
 EOF
-
+  
+  
   " Check if response_lines exists
   if !exists('s:response_lines')
     echomsg 'No response received from Grok API.'
@@ -118,7 +126,7 @@ EOF
   for l:line in s:response_lines
     let l:prefix = l:first ? '🦜: ' : '   '
     let l:text = l:prefix . l:line
-    call s:TypeText(l:text . "\n", 50) " 50ms per character
+    call s:TypeText(l:text . "\n", 30) " 50ms per character
     let l:first = 0
   endfor
 
